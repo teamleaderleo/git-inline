@@ -1,0 +1,27 @@
+{
+  "name": "git-inline",
+  "version": "0.0.1",
+  "description": "Visualize Git history directly inline with your code",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [
+  "git",
+  "history",
+  "preview",
+  "inline",
+  "visualization",
+  "developer-tools",
+  "react",
+  "commit-history",
+  "github"
+  ],
+  "author": "teamleaderleo",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/teamleaderleo/git-inline.git"
+  }
+}

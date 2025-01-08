@@ -1,6 +1,7 @@
 {
   "name": "git-inline",
   "version": "0.0.1",
+  "type": "module",
   "description": "Visualize Git history directly inline with your web app!",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
+    "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
   },
   "dependencies": {

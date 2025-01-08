@@ -8,20 +8,27 @@
     "test": "jest"
   },
   "keywords": [
-  "git",
-  "history",
-  "preview",
-  "inline",
-  "visualization",
-  "developer-tools",
-  "react",
-  "commit-history",
-  "github"
+    "git",
+    "history",
+    "preview",
+    "inline",
+    "visualization",
+    "developer-tools",
+    "react",
+    "commit-history",
+    "github"
   ],
   "author": "teamleaderleo",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/teamleaderleo/git-inline.git"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "@octokit/rest": "^21.0.2"
   }
 }

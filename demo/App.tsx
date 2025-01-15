@@ -1,22 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { GitHistory, getFileHistory, CommitInfo } from '../src';
+import { InlineGit } from '../src';
 
 const App = () => {
-  const [commits, setCommits] = useState<CommitInfo[]>([]);
-
-  useEffect(() => {
-    const loadCommits = async () => {
-      const history = await getFileHistory(
-        'teamleaderleo',
-        'git-inline',
-        'src/index.ts'
-      );
-      setCommits(history);
-    };
-
-    loadCommits();
-  }, []);
 
   return (
     <div className="p-8">
@@ -29,7 +15,11 @@ const App = () => {
         </div>
         
         {/* Git History component */}
-        {commits.length > 0 && <GitHistory commits={commits} />}
+        <InlineGit 
+            owner="teamleaderleo" 
+            repo="git-inline"
+            files={['src/components/git-history.tsx']}
+        />
       </div>
     </div>
   );

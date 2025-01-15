@@ -6,13 +6,14 @@ const octokit = new Octokit();
 export async function getFileHistory(
   owner: string,
   repo: string,
-  path: string
+  files: string | string[]
 ): Promise<CommitInfo[]> {
   try {
+    const paths = Array.isArray(files) ? files : [files];
     const commits = await octokit.repos.listCommits({
       owner,
       repo,
-      path,
+      path: paths.join(',')
     });
     
     return commits.data.map(commit => ({

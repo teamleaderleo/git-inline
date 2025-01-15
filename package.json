@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc",
     "test": "jest",
-    "dev": "npm run build && node test.js"
+    "dev": "vite demo"
   },
   "keywords": [
     "git",
@@ -30,8 +30,14 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7"
   },
   "dependencies": {
     "@octokit/rest": "^21.0.2"

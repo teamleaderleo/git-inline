@@ -1,5 +1,5 @@
 import { Octokit } from '@octokit/rest';
-import { CommitInfo } from './types/git';
+import { CommitInfo } from './types/git-types';
 
 const octokit = new Octokit();
 

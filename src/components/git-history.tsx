@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CommitInfo } from '../types/git';
+import { CommitInfo } from '../types/git-types';
 
 interface GitHistoryProps {
   commits: CommitInfo[];

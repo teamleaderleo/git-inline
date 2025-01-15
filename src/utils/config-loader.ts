@@ -2,6 +2,7 @@ interface GitInlineConfig {
   owner: string;
   repo: string;
   defaultBranch?: string;
+  sourceRoot?: string;
 }
 
 // Add type declaration for our injected config
@@ -9,7 +10,8 @@ declare const __GIT_INLINE_CONFIG__: GitInlineConfig;
 
 const defaultConfig: GitInlineConfig = {
   owner: 'teamleaderleo',
-  repo: 'git-inline'
+  repo: 'git-inline',
+  sourceRoot: 'src'
 };
 
 export function loadConfig(): GitInlineConfig {

@@ -15,9 +15,29 @@ interface InlineGitProps {
   files?: FileSpec | FileSpec[];
 }
 
+function getRelativePath(url: string, sourceRoot: string = 'src'): string | null {
+  try {
+    // Find where the source root is in the path
+    const rootIndex = url.indexOf(sourceRoot);
+    if (rootIndex === -1) return null;
+    
+    // Get everything after the source root
+    let path = url.slice(rootIndex);
+    
+    // Clean up any query params or hash
+    path = path.split('?')[0].split('#')[0];
+    
+    return path;
+  } catch (e) {
+    console.warn('Failed to parse path:', e);
+    return null;
+  }
+}
+
 const defaultConfig = {
   owner: 'teamleaderleo',
-  repo: 'git-inline'
+  repo: 'git-inline',
+  sourceRoot: 'src'  // Default source root
 };
 
 const InlineGit: React.FC<InlineGitProps> = ({ 
@@ -48,92 +68,87 @@ const InlineGit: React.FC<InlineGitProps> = ({
   const owner = propsOwner || config.owner;
   const repo = propsRepo || config.repo;
 
-  function extractRepoPath(filePath: string): string {
-  // Handle Vite dev server paths
-  if (filePath.includes('/@fs/')) {
-    // Extract everything after /src/ or /components/ etc.
-    const match = filePath.match(/\/(src|components)\/(.+)$/);
-    if (match) {
-      return match[0].startsWith('/') ? match[0].substring(1) : match[0];
-    }
-  }
-  return filePath;
-}
-
   useEffect(() => {
     const loadCommits = async () => {
-        setIsLoading(true);
-        setError(null);
-        setDebug({});
-        
-        try {
-            if (!owner || !repo) {
-            throw new Error('Owner and repo must be specified either in props or config');
-            }
-
-            setDebug((prev: Record<string, any>) => ({ ...prev, owner, repo }));
-
-            let paths: string[] = [];
-            
-            // If no files specified, try to get current module path
-            if (!files) {
-            try {
-                const currentFile = import.meta.url;
-                console.log('Current file URL:', currentFile);
-                const repoPath = extractRepoPath(currentFile);
-                console.log('Extracted repo path:', repoPath);
-                setDebug((prev: Record<string, any>) => ({ 
-                ...prev, 
-                currentFile,
-                extractedPath: repoPath 
-                }));
-                paths = [repoPath];
-            } catch (e) {
-                console.error('Could not auto-detect current file:', e);
-                throw new Error('No files specified and could not auto-detect current file');
-            }
-            } else {
-            // Deal with various file specifications
-            const fileSpecs = Array.isArray(files) ? files : [files];
-            paths = await Promise.all(fileSpecs.map(async spec => {
-                if (spec === '*') {
-                return '';  // Empty string in GitHub API means all files
-                }
-                
-                if (typeof spec === 'string') {
-                return extractRepoPath(spec);
-                }
-                
-                if (spec.recursive) {
-                return `${extractRepoPath(spec.path)}/**/*`;
-                }
-                
-                return extractRepoPath(spec.path);
-            }));
-            }
-
-            console.log('Fetching history for paths:', paths);
-            setDebug((prev: Record<string, any>) => ({ ...prev, paths }));
-
-            const history = await getFileHistory(owner, repo, paths);
-            console.log('Received history:', history);
-            setDebug((prev: Record<string, any>) => ({ ...prev, history }));
-            
-            if (!history || history.length === 0) {
-            throw new Error('No commits found for the specified path(s)');
-            }
-
-            setCommits(history);
-        } catch (err) {
-            console.error('Error loading commits:', err);
-            setError(err instanceof Error ? err.message : 'Failed to load commit history');
-        } finally {
-            setIsLoading(false);
+      setIsLoading(true);
+      setError(null);
+      setDebug({});
+      
+      try {
+        if (!owner || !repo) {
+          throw new Error('Owner and repo must be specified either in props or config');
         }
-        };
+
+        setDebug((prev: Record<string, any>) => ({ ...prev, owner, repo }));
+
+        let paths: string[] = [];
+        
+        // If no files specified, try to get current module path
+        if (!files) {
+          try {
+            const currentFile = import.meta.url;
+            console.log('Current file URL:', currentFile);
+            
+            const repoPath = getRelativePath(currentFile, config.sourceRoot);
+            if (!repoPath) {
+              throw new Error(`Could not find source root "${config.sourceRoot}" in path`);
+            }
+            
+            console.log('Extracted repo path:', repoPath);
+            setDebug((prev: Record<string, any>) => ({ 
+              ...prev, 
+              currentFile,
+              sourceRoot: config.sourceRoot,
+              extractedPath: repoPath 
+            }));
+            
+            paths = [repoPath];
+          } catch (e) {
+            console.error('Could not auto-detect current file:', e);
+            throw new Error('No files specified and could not auto-detect current file');
+          }
+        } else {
+          // Deal with various file specifications
+          const fileSpecs = Array.isArray(files) ? files : [files];
+          paths = fileSpecs.map(spec => {
+            if (spec === '*') {
+              return '';  // Empty string in GitHub API means all files
+            }
+            
+            if (typeof spec === 'string') {
+              return spec;  // User-provided paths are assumed to be correct
+            }
+            
+            if (spec.recursive) {
+              return `${spec.path}/**/*`;
+            }
+            
+            return spec.path;
+          });
+        }
+
+        console.log('Fetching history for paths:', paths);
+        setDebug((prev: Record<string, any>) => ({ ...prev, paths }));
+
+        const history = await getFileHistory(owner, repo, paths);
+        console.log('Received history:', history);
+        setDebug((prev: Record<string, any>) => ({ ...prev, history }));
+        
+        if (!history || history.length === 0) {
+          throw new Error('No commits found for the specified path(s)');
+        }
+
+        setCommits(history);
+      } catch (err) {
+        console.error('Error loading commits:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load commit history');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     loadCommits();
-  }, [owner, repo, files]);
+  }, [owner, repo, files, config.sourceRoot]);
 
   if (error) {
     return (

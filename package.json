@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc",
     "test": "jest",
-    "dev": "vite demo"
+    "dev": "set NODE_OPTIONS=--loader ts-node/esm && vite demo --config vite.config.ts"
   },
   "keywords": [
     "git",
@@ -40,6 +40,7 @@
     "vite": "^6.0.7"
   },
   "dependencies": {
-    "@octokit/rest": "^21.0.2"
+    "@octokit/rest": "^21.0.2",
+    "lilconfig": "^3.1.3"
   }
 }

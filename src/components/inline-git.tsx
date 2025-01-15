@@ -116,14 +116,20 @@ const InlineGit: React.FC<InlineGitProps> = ({
             }
             
             if (typeof spec === 'string') {
-              return spec;  // User-provided paths are assumed to be correct
+              // Always prefix with sourceRoot if it doesn't start with it
+              return spec.startsWith(config.sourceRoot) ? spec : `${config.sourceRoot}/${spec}`;
             }
             
             if (spec.recursive) {
-              return `${spec.path}/**/*`;
+              const basePath = spec.path.startsWith(config.sourceRoot) ? 
+                spec.path : 
+                `${config.sourceRoot}/${spec.path}`;
+              return `${basePath}/**/*`;
             }
             
-            return spec.path;
+            return spec.path.startsWith(config.sourceRoot) ? 
+              spec.path : 
+              `${config.sourceRoot}/${spec.path}`;
           });
         }
 

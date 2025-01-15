@@ -13,7 +13,33 @@ npm install git-inline
 ## Usage
 
 ```typescript
-// There's nothing here right now!
+// Just track the current file!
+<InlineGit />  // Uses config for owner/repo
+
+// Track a specific file!
+<InlineGit files="src/components/Header.tsx" />
+
+// Track multiple specific files!
+<InlineGit files={[
+  'src/components/Header.tsx',
+  'src/components/Footer.tsx'
+]} />
+
+// Track the entire directory!
+<InlineGit files={{ 
+  path: 'src/components',
+  recursive: true 
+}} />
+
+// Track the entire repo!
+<InlineGit files="*" />
+
+// Override config settings!
+<InlineGit 
+  owner="different-owner"
+  repo="different-repo"
+  files="src/components/Header.tsx"
+/>
 
 ```
 

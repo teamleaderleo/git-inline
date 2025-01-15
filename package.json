@@ -1,6 +1,6 @@
 {
   "name": "git-inline",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "description": "Visualize Git history directly inline with your web app!",
   "main": "dist/index.js",

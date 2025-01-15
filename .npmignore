@@ -1,0 +1,25 @@
+# Development
+node_modules/
+demo/
+.vscode/
+*.log
+
+# Source control
+.git/
+.gitignore
+
+# Configuration
+vite.config.ts
+tsconfig.json
+.gitinline.config.*
+
+# Tests
+test.ts
+*.test.ts
+*.spec.ts
+
+# Source maps
+*.map
+
+# Build process
+.github/

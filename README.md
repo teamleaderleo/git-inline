@@ -2,6 +2,8 @@
 
 Visualize Git history inline with your web app!
 
+[![npm version](https://badge.fury.io/js/git-inline.svg)](https://www.npmjs.com/package/git-inline)
+
 ## Installation
 
 ```bash

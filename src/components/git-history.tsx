@@ -1,11 +1,6 @@
-import {
-  CSSProperties,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
-import { CommitInfo } from '../types/git-types.js';
+import { useCallback, useEffect, useId, useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
+import type { CommitInfo } from '../types/git-types.js';
 
 export interface GitHistoryProps {
   commits: CommitInfo[];
@@ -76,6 +71,7 @@ const styles: Record<string, CSSProperties> = {
     color: 'inherit',
     textAlign: 'left',
     cursor: 'pointer',
+    font: 'inherit',
   },
   message: {
     margin: 0,
@@ -171,6 +167,7 @@ export function GitHistory({
   style,
   emptyMessage = 'No commits found for this file.',
 }: GitHistoryProps) {
+  const idPrefix = useId();
   const [expandedSha, setExpandedSha] = useState<string | null>(null);
   const [details, setDetails] = useState<Record<string, CommitInfo>>({});
   const [loadingSha, setLoadingSha] = useState<string | null>(null);
@@ -252,7 +249,7 @@ export function GitHistory({
             const expanded = expandedSha === commit.sha;
             const detail = details[commit.sha] ?? commit;
             const detailError = detailErrors[commit.sha];
-            const panelId = `git-inline-${commit.sha}`;
+            const panelId = `${idPrefix}-${commit.shortSha}`;
 
             return (
               <li

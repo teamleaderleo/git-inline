@@ -5,7 +5,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { CommitInfo } from '../types/git-types';
+import { CommitInfo } from '../types/git-types.js';
 
 export interface GitHistoryProps {
   commits: CommitInfo[];

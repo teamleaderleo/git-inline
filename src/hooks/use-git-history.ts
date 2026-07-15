@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getFileHistory } from '../github-api';
+import { getFileHistory } from '../github-api.js';
 import {
   CommitInfo,
   GitHistoryLoader,
   GitHistoryRequest,
-} from '../types/git-types';
+} from '../types/git-types.js';
 
 export interface UseGitHistoryOptions extends GitHistoryRequest {
   enabled?: boolean;

@@ -1,36 +1,35 @@
 import { Octokit } from '@octokit/rest';
 import {
   CommitInfo,
-  GitFileChange,
   GitHubCommitRequest,
+  GitFileChange,
   GitHubHistoryRequest,
-} from './types/git-types';
+} from './types/git-types.js';
 
 type CommitSummary = Awaited<
-  ReturnType<Octokit['repos']['listCommits']>
+  ReturnType<Octokit['rest']['repos']['listCommits']>
 >['data'][number];
 type CommitDetails = Awaited<
-  ReturnType<Octokit['repos']['getCommit']>
+  ReturnType<Octokit['rest']['repos']['getCommit']>
 >['data'];
 type CommitFile = NonNullable<CommitDetails['files']>[number];
 
-const clients = new Map<string, Octokit>();
+const anonymousClient = new Octokit();
 
 function getClient(token?: string): Octokit {
-  const key = token ?? 'anonymous';
-  const existingClient = clients.get(key);
-
-  if (existingClient) {
-    return existingClient;
-  }
-
-  const client = new Octokit(token ? { auth: token } : undefined);
-  clients.set(key, client);
-  return client;
+  return token ? new Octokit({ auth: token }) : anonymousClient;
 }
 
 function clampLimit(limit = 10): number {
+  if (!Number.isFinite(limit)) {
+    return 10;
+  }
+
   return Math.min(100, Math.max(1, Math.floor(limit)));
+}
+
+function clampPage(page = 1): number {
+  return Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1;
 }
 
 function requestOptions(signal?: AbortSignal): { request?: { signal: AbortSignal } } {
@@ -85,13 +84,13 @@ export async function getFileHistory(
   const { owner, repo, path, branch, limit, page = 1, token, signal } = request;
   const client = getClient(token);
 
-  const response = await client.repos.listCommits({
+  const response = await client.rest.repos.listCommits({
     owner,
     repo,
     path,
     sha: branch,
     per_page: clampLimit(limit),
-    page: Math.max(1, Math.floor(page)),
+    page: clampPage(page),
     ...requestOptions(signal),
   });
 
@@ -105,7 +104,7 @@ export async function getCommitDetails(
   const { owner, repo, path, sha, token, signal } = request;
   const client = getClient(token);
 
-  const response = await client.repos.getCommit({
+  const response = await client.rest.repos.getCommit({
     owner,
     repo,
     ref: sha,

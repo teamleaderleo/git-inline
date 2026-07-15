@@ -1,90 +1,124 @@
 import { Octokit } from '@octokit/rest';
-import { CommitInfo } from './types/git-types';
+import type {
+  CommitInfo,
+  GitHubCommitRequest,
+  GitFileChange,
+  GitHubHistoryRequest,
+} from './types/git-types.js';
 
-const octokit = new Octokit();
+type CommitSummary = Awaited<
+  ReturnType<Octokit['rest']['repos']['listCommits']>
+>['data'][number];
+type CommitDetails = Awaited<
+  ReturnType<Octokit['rest']['repos']['getCommit']>
+>['data'];
+type CommitFile = NonNullable<CommitDetails['files']>[number];
 
-export async function getFileHistory(
-  owner: string,
-  repo: string,
-  files: string | string[]
-): Promise<CommitInfo[]> {
-  try {
-    console.log('Getting file history for:', { owner, repo, files });
-    
-    const paths = Array.isArray(files) ? files : [files];
-    console.log('Processed paths:', paths);
+const anonymousClient = new Octokit();
 
-    // For directory tracking, we should probably not join paths
-    const isDirectory = paths.some(p => p.includes('*'));
-    
-    if (isDirectory) {
-      // Get directory commits - GitHub API uses different endpoint
-      // or different parameters for directory listing
-      const directoryPath = paths[0].replace('/**/*', '');
-      console.log('Getting directory commits for:', directoryPath);
-      
-      const commits = await octokit.repos.listCommits({
-        owner,
-        repo,
-        path: directoryPath
-      });
-      
-      console.log('GitHub API response:', {
-        status: commits.status,
-        headers: commits.headers,
-        data: commits.data
-      });
+function getClient(token?: string): Octokit {
+  return token ? new Octokit({ auth: token }) : anonymousClient;
+}
 
-      return commits.data.map(commit => ({
-        sha: commit.sha,
-        date: commit.commit.author?.date || '',
-        message: commit.commit.message,
-        changes: commit.files?.[0]?.patch
-      }));
-    }
-
-    // For multiple files, we need to make separate requests
-    const commitPromises = paths.map(path => 
-      octokit.repos.listCommits({
-        owner,
-        repo,
-        path
-      })
-    );
-
-    const results = await Promise.all(commitPromises);
-    console.log('GitHub API responses:', results.map(r => ({
-      status: r.status,
-      headers: r.headers,
-      path: r.data?.[0]?.files?.[0]?.filename
-    })));
-
-    // Merge and sort commits from all files
-    const allCommits = results.flatMap(result => 
-      result.data.map(commit => ({
-        sha: commit.sha,
-        date: commit.commit.author?.date || '',
-        message: commit.commit.message,
-        changes: commit.files?.[0]?.patch
-      }))
-    );
-
-    // Sort by date descending
-    return allCommits.sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-
-  } catch (error) {
-    console.error('Error in getFileHistory:', error);
-    if (error instanceof Error) {
-      // If it's an Octokit error, it might have additional details
-      const octokitError = error as any;
-      if (octokitError.status) {
-        console.error('GitHub API Status:', octokitError.status);
-        console.error('GitHub API Message:', octokitError.message);
-        console.error('GitHub API Response:', octokitError.response?.data);
-      }
-    }
-    throw error;
+function clampLimit(limit = 10): number {
+  if (!Number.isFinite(limit)) {
+    return 10;
   }
+
+  return Math.min(100, Math.max(1, Math.floor(limit)));
+}
+
+function clampPage(page = 1): number {
+  return Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1;
+}
+
+function requestOptions(signal?: AbortSignal): { request?: { signal: AbortSignal } } {
+  return signal ? { request: { signal } } : {};
+}
+
+function mapCommitSummary(commit: CommitSummary | CommitDetails): CommitInfo {
+  const sha = commit.sha;
+  const author = commit.author;
+  const gitAuthor = commit.commit.author;
+  const gitCommitter = commit.commit.committer;
+
+  return {
+    sha,
+    shortSha: sha.slice(0, 7),
+    date: gitAuthor?.date ?? gitCommitter?.date ?? '',
+    message: commit.commit.message,
+    htmlUrl: commit.html_url,
+    author: {
+      name: author?.login ?? gitAuthor?.name ?? 'Unknown author',
+      email: gitAuthor?.email ?? undefined,
+      avatarUrl: author?.avatar_url ?? undefined,
+      profileUrl: author?.html_url ?? undefined,
+    },
+  };
+}
+
+function mapFileChange(file: CommitFile): GitFileChange {
+  return {
+    path: file.filename,
+    previousPath: file.previous_filename ?? undefined,
+    status: file.status,
+    additions: file.additions,
+    deletions: file.deletions,
+    changes: file.changes,
+    patch: file.patch ?? undefined,
+    blobUrl: file.blob_url ?? undefined,
+    rawUrl: file.raw_url ?? undefined,
+  };
+}
+
+/**
+ * Fetches commit summaries for one repository file.
+ *
+ * This function works directly in the browser for public repositories. For
+ * private repositories, call it from a server or supply your own loader to the
+ * React component so credentials stay outside the browser bundle.
+ */
+export async function getFileHistory(
+  request: GitHubHistoryRequest,
+): Promise<CommitInfo[]> {
+  const { owner, repo, path, branch, limit, page = 1, token, signal } = request;
+  const client = getClient(token);
+
+  const response = await client.rest.repos.listCommits({
+    owner,
+    repo,
+    path,
+    sha: branch,
+    per_page: clampLimit(limit),
+    page: clampPage(page),
+    ...requestOptions(signal),
+  });
+
+  return response.data.map(mapCommitSummary);
+}
+
+/** Fetches one commit and extracts the change for the requested file. */
+export async function getCommitDetails(
+  request: GitHubCommitRequest,
+): Promise<CommitInfo> {
+  const { owner, repo, path, sha, token, signal } = request;
+  const client = getClient(token);
+
+  const response = await client.rest.repos.getCommit({
+    owner,
+    repo,
+    ref: sha,
+    ...requestOptions(signal),
+  });
+
+  const commit = response.data;
+  const matchingFile = commit.files?.find(
+    (file: CommitFile) =>
+      file.filename === path || file.previous_filename === path,
+  );
+
+  return {
+    ...mapCommitSummary(commit),
+    file: matchingFile ? mapFileChange(matchingFile) : undefined,
+  };
 }

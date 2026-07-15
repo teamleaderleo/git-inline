@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getFileHistory } from '../github-api.js';
-import {
+import type {
   CommitInfo,
   GitHistoryLoader,
   GitHistoryRequest,

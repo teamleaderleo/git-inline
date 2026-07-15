@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
-import { getCommitDetails } from '../github-api';
-import { useGitHistory } from '../hooks/use-git-history';
+import { getCommitDetails } from '../github-api.js';
+import { useGitHistory } from '../hooks/use-git-history.js';
 import {
   GitCommitLoader,
   GitHistoryLoader,
-} from '../types/git-types';
-import GitHistory, { GitHistoryProps } from './git-history';
+} from '../types/git-types.js';
+import GitHistory, { GitHistoryProps } from './git-history.js';
 
 export interface InlineGitProps
   extends Omit<
